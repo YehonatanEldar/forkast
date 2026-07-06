@@ -35,5 +35,5 @@ class Activation(Layer):
         """
         makes the backward pass and changes the values, returns the new gradient
         """
-        next_gradient = output_gradient * self.derivative_func(self.input)
+        next_gradient = -output_gradient * self.derivative_func(self.input)
         return next_gradient
