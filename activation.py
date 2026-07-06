@@ -30,3 +30,10 @@ class Activation(Layer):
         self.input = input
         output = self.activation_func(self.input)
         return output
+    
+    def backward(self, output_gradient: np.array, learning_rate: float) -> np.array:
+        """
+        makes the backward pass and changes the values, returns the new gradient
+        """
+        next_gradient = output_gradient * self.derivative_func(self.input)
+        return next_gradient
