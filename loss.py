@@ -6,7 +6,6 @@ class Loss(Layer):
         """
         Calculates the MSE for the given batch
         """
-
         return np.mean((predicted - real)**2)
     
     def backward(self, predicted: np.array, real: np.array):

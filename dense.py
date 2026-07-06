@@ -17,7 +17,7 @@ class Dense(Layer):
         """
         Computes the output of the layer
         """
-        output_arr = np.zeros(self.weights.next_size)
+        output_arr = np.zeros(self.next_size)
         self.input = input_arr
         self.input += self.biases
 

@@ -6,19 +6,17 @@ import numpy as np
 import json
 
 class NeuralNetwork:
-    def __init__(self, loss: Loss):
+    def __init__(self):
         """
         intialize a neural network object
         """
         self.layers = []
-        self.loss = loss
+        self.loss = Loss()
 
-    def add(self, new_layer: Dense):
+    def add(self, new_layer: Layer):
         """
         append a new layer to the neural network
         """
-        new_layer.biases = np.random.uniform(low=-10.0, high=11.0, size=new_layer.biases.shape) # randomize baises
-        new_layer.weights = np.random.uniform(low=-10.0, high=11.0, size=new_layer.weights.shape) # randomize weights
 
         self.layers.append(new_layer)
         self.layers.append(Activation(ActivationFuncs.relu))
@@ -29,7 +27,8 @@ class NeuralNetwork:
         """
         for curr_layer in self.layers:
             input_data = curr_layer.forward(input_data)
-        return ActivationFuncs.sigmoid(self.layers[-1].input) # Apply sigmoid to final result
+            print(input_data)
+        return input_data
     
     def train(self, x_train: np.array, y_train: np.array, epochs: int, learning_rate: float): # choo choo
         """
@@ -51,7 +50,7 @@ class NeuralNetwork:
 
     def save(self, filepath: str): # TODO make save work
         """
-        save a neural network to a file
+        Save a neural network to a file
         """
         with open(filepath + '.json', 'w') as save_file:
             json.dump(save_file, self) 
