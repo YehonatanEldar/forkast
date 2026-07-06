@@ -1,4 +1,5 @@
 from layer import Layer
+from loss import Loss
 import numpy as np
 
 class Dense(Layer):
@@ -25,3 +26,18 @@ class Dense(Layer):
                 output += input * weight
 
         return output_arr
+    
+    def backward(self, output_gradient: np.array, learning_rate: float) -> float:
+        """
+        Calculates the gradients for the weights and biases
+        """
+
+        weights_gradient = np.dot(self.input.T, output_gradient)
+        bias_gradient = np.sum(output_gradient, axis=0, keepdims=True)
+    
+        input_gradient = np.dot(output_gradient, self.weights.T) 
+
+        self.weights -= weights_gradient * learning_rate
+        self.biases -= bias_gradient * learning_rate
+
+        return input_gradient
