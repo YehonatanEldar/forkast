@@ -25,3 +25,20 @@ class Dense(Layer):
                 output += input * weight
 
         return output_arr
+    
+    def backward(self, output_gradient: np.array, learning_rate: float) -> float:
+        """
+        Calculates the gradients for the weights and biases
+        """
+
+        # Biases
+        bias_gradient = sum(output_gradient)
+        self.biases += -bias_gradient * learning_rate
+
+        # Weights
+        weights_gradient = self.input * output_gradient
+        self.weights += -weights_gradient * learning_rate
+
+        # Calculate Loss
+        
+
