@@ -49,7 +49,7 @@ class NeuralNetwork:
             for layer in self.layers[::-1]:
                 current_gradient = layer.backward(current_gradient, learning_rate)
 
-    def save(self, filepath: str): # TODO make save work
+    def save(self, filepath: str):
         """
         save a neural network to a file
         """
