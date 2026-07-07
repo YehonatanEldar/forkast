@@ -1,7 +1,7 @@
 from layer import Layer
 from dense import Dense
 from loss import Loss
-from activation import Activation, ActivationFuncs, func_dict
+from activation import Activation, ActivationFuncs
 import numpy as np
 import json
 
@@ -53,7 +53,6 @@ class NeuralNetwork:
         """
         save a neural network to a file
         """
-        flipped_dict = {value: key for key, value in func_dict.items()} #get a dict of the function as key
         layer_data = []
         for layer in self.layers:
             if type(layer) == Dense:
