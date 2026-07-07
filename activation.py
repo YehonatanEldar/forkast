@@ -17,7 +17,7 @@ class Activation(Layer):
         func_dict = {'relu': lambda x: np.maximum(x, 0),
                      'sigmoid': lambda x: 1/(1+ np.exp(-x))}
         derivative_dict = {'relu': lambda x: 1 if x > 0 else 0,
-                           'sigmoid': lambda x: func_dict['sigmoid'](x) * (1 - func_dict['sigmoid'])(x)}
+                           'sigmoid': lambda x: func_dict['sigmoid'](x) * (1 - func_dict['sigmoid'](x))}
 
         self.activation_func = func_dict[activation_func.value]
         self.derivative_func = derivative_dict[activation_func.name]
