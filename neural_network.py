@@ -91,6 +91,3 @@ class NeuralNetwork:
             self.layers[-1].size = size
             self.layers[-1].size = next_size
 
-            self.add(Activation(ActivationFuncs.sigmoid)) #add sigmoid after every layer
-
-
