@@ -63,5 +63,34 @@ class NeuralNetwork:
         with open(filepath + '.json', 'w') as save_file:
             json.dump(save_file, layer_data)
 
+    def load(self, savefile: str):
+        """
+        load neural network from file
+        """
+        layer_data = []
+        try:
+            with open(savefile, 'r') as file:
+                layer_data = json.load(file)
+        except Exception as e:
+            print('Error while opening file:', e)
+            return # close load after fail
+        
+        for layer in layer_data:
+            # get length of nodes on curr and next layer
+            next_size = len(layer['weights'][0])
+            size = len(layer['biases'])
+
+            new_layer = Dense(size, next_size) 
+            self.add(new_layer) #add randomized layer
+
+            weights = np.array(layer['weights']) #get biases
+            biases = np.array(layer['biases']) #get weights
+
+            self.layers[-1].weights = weights
+            self.layers[-1].biases = biases
+            self.layers[-1].size = size
+            self.layers[-1].size = next_size
+
+            self.add(Activation(ActivationFuncs.sigmoid)) #add sigmoid after every layer
 
 
