@@ -1,28 +1,29 @@
-from neural_network import NeuralNetwork
-from dense import Dense
-from activation import Activation, ActivationFuncs
-from loss import Loss
-from pathlib import Path
-import pandas as pd
-import numpy as np
 import struct
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+from activation import Activation, ActivationFuncs
+from dense import Dense
+from loss import Loss
+from neural_network import NeuralNetwork
 
 # Constants
 TARGET_NUM = 3
-TRAINING_PORTION = 0.8
+TRAIN_SIZE = 0.8
 BATCH_SIZE = 100
 EPOCHS = 10
 LEARNING_RATE = 0.001
-LAYER_SIZES = [784, 128, 64, 1, 0]
+LAYER_SIZES = [784, 128, 64, 1]
 
 DATASET_PATH = 'data/mnist_dataset.csv'
 
 def load_mnist_to_file(images_path, labels_path, file_path, target_num):
-    """Loads MNIST binary files and returns a clean pandas DataFrame.
-
-    Converts images to normalized flat rows and creates a binary target column.
     """
-    # 1. Read and parse images
+    Loads the mnist dataset to a csv
+    """
+    # read and parse images
     with open(images_path, "rb") as f:
         _, num_images, rows, cols = struct.unpack(">IIII", f.read(16))
         images = np.fromfile(f, dtype=np.uint8)
@@ -49,19 +50,70 @@ def load_mnist_to_file(images_path, labels_path, file_path, target_num):
     # 5. Add the binary target column (1 if target_num, else 0) using efficient numpy vectorized operations
     df["target"] = (labels == target_num).astype(int)
 
-    df.to_csv(file_path, index=False)
+    clean_df = df.dropna()
+    clean_df.to_csv(file_path, index=False)
 
-def train_test_split(df: pd.DataFrame, test_size: int) -> tuple:
-    pass
+def create_network(layer_sizes: list[int]) -> NeuralNetwork:
+    """
+    Creates a network and fills it with random values
+    """
+    network = NeuralNetwork()
 
-def batch_split(df: pd.DataFrame, batch_size: int):
-    pass
+    for i in range(len(layer_sizes) - 1):
+        # Create layers
+        dense = Dense(layer_sizes[i], layer_sizes[i + 1])
 
-def train_on_batches(network: NeuralNetwork, batches: list):
-    pass
+        dense.biases = np.random.uniform(low=-10.0, high=11.0, size=dense.biases.shape) # randomize baises
+        dense.weights = np.random.uniform(low=-10.0, high=11.0, size=dense.weights.shape) # randomize weights
 
-def test_network(network: NeuralNetwork, test_data: pd.DataFrame):
-    pass
+        network.add(dense)
+
+    # Add last one
+    dense = Dense(layer_sizes[-1], 0)
+    network.add(dense)
+
+    return network
+
+def target_split(df: pd.DataFrame) -> tuple:
+    """
+    Splits the df to the X and y
+    """
+    return df.drop(columns=['target']).to_numpy(), df['target'].to_numpy()
+
+def train_test_split(df: pd.DataFrame, train_size: float) -> tuple:
+    """
+    Splits the data to train and test sets
+    """
+    train_df = df.sample(frac=train_size, random_state=42)
+    test_df = df.drop(train_df.index)
+
+    return train_df, test_df
+
+def train_network(network: NeuralNetwork, df: pd.DataFrame, batch_size: int, epochs: int, learning_rate: float):
+    """
+    Trains the network on the given data
+    """
+    X, y = target_split(df)
+    num_batch = 1
+    
+    for i in range(0, len(df), batch_size):
+        print(f"Batch {num_batch}")
+        # Split to batches
+        batch_x = X[i:i+batch_size]
+        batch_y = y[i:i+batch_size]
+        
+        network.train(batch_x, batch_y, epochs, learning_rate)
+        num_batch += 1
+
+def test_network(network: NeuralNetwork, test_data: pd.DataFrame) -> float:
+    """
+    Tests the network on the given test data
+    """
+    X, y = target_split(test_data)
+    results = network.predict(X)
+    mean_error = network.loss.forward(results, y)
+
+    return mean_error
 
 def main():
     if not Path(DATASET_PATH).is_file():
@@ -69,45 +121,14 @@ def main():
 
     df = pd.read_csv(DATASET_PATH)
 
+    network = create_network(LAYER_SIZES)
+
+    train, test = train_test_split(df, TRAIN_SIZE)
+
+    train_network(network, train, BATCH_SIZE, EPOCHS, LEARNING_RATE)
+    print("Finished training!")
+
+    print("Test Error Rate: " + test_network(network, test))
+
 if __name__ == '__main__':
     main()
-
-# TODO: import the pandas df and work with it instead
-# Splitting
-slice_idx = int(len(images_flat)*TRAINING_PORTION)
-x_train, x_test = images_flat[:slice_idx], images_flat[slice_idx:]
-y_train, y_test = new_labels[:slice_idx], new_labels[slice_idx:]
-
-# Batching
-x_batches = []
-y_batches = []
-for i in range(0, len(x_train), BATCH_SIZE):
-    x_batches.append(x_train[i:min(i + BATCH_SIZE, len(x_train) - 1)])
-
-for i in range(0, len(y_train), BATCH_SIZE):
-    y_batches.append(y_train[i:min(i + BATCH_SIZE, len(y_train) - 1)])
-
-# Create network
-network = NeuralNetwork()
-
-for i in range(len(LAYER_SIZES) - 1):
-    dense = Dense(LAYER_SIZES[i], LAYER_SIZES[i + 1])
-    activation = Activation(ActivationFuncs.sigmoid)
-
-    dense.biases = np.random.uniform(low=-10.0, high=11.0, size=dense.biases.shape) # randomize baises
-    dense.weights = np.random.uniform(low=-10.0, high=11.0, size=dense.weights.shape) # randomize weights
-
-    network.add(dense)
-    network.add(activation)
-
-# Training
-num_batch = 1
-for x_batch, y_batch in zip(x_batches, y_batches):
-    print("Batch: " + str(num_batch))
-    network.train(x_batch, y_batch, EPOCHS, LEARNING_RATE)
-    num_batch += 1
-
-# Testing
-results = np.fromiter(map(network.predict, x_test))
-mean_error = network.loss.forward(results, y_test)
-print("Mean Error: " + mean_error)

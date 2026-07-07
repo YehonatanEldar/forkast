@@ -1,9 +1,12 @@
-from layer import Layer
-from dense import Dense
-from loss import Loss
-from activation import Activation, ActivationFuncs
-import numpy as np
 import json
+
+import numpy as np
+
+from activation import Activation, ActivationFuncs
+from dense import Dense
+from layer import Layer
+from loss import Loss
+
 
 class NeuralNetwork:
     def __init__(self):
@@ -25,28 +28,31 @@ class NeuralNetwork:
         """
         Applies the network on a given input
         """
+        # TODO: this function somehow returns one value
         for curr_layer in self.layers:
             input_data = curr_layer.forward(input_data)
-            print(input_data)
         return input_data
     
     def train(self, x_train: np.array, y_train: np.array, epochs: int, learning_rate: float): # choo choo
         """
         Trains the network on the given batch
         """
+        # x_train = [sub for sub in x_train if len(sub) > 0]
 
-        for _ in range(epochs):
+        for i in range(epochs):
+            print(f"    Epoch: #{i + 1}")
             # predict
+            print(x_train.shape)
             results = self.predict(x_train)
-
+            print(results)
             # calc loss
-            print("Error: " + self.loss.forward(results, y_train))
+            print(f"Error: {self.loss.forward(results, y_train)}")
 
             # propagate backwards
-            current_gradient = self.loss.backward()
+            current_gradient = self.loss.backward(results, y_train)
 
-            for layer in self.layers[::-1]:
-                current_gradient = layer.backward(current_gradient, learning_rate)
+            for layer in self.layers[::-1]: # iterate backwards
+                current_gradient = layer.backward(results, current_gradient, learning_rate)
 
     def save(self, filepath: str): # TODO make save work
         """
