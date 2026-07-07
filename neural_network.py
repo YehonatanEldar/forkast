@@ -21,7 +21,7 @@ class NeuralNetwork:
         new_layer.weights = np.random.uniform(low=-10.0, high=11.0, size=new_layer.weights.shape) # randomize weights
 
         self.layers.append(new_layer)
-        self.layers.append(Activation(ActivationFuncs.relu))
+        self.layers.append(Activation(ActivationFuncs.sigmoid))
 
     def predict(self, input_data: np.array) -> float:
         """
@@ -60,9 +60,6 @@ class NeuralNetwork:
                 bias_list = layer.biases.tolist()
                 weight_list = layer.weights.tolist()
                 layer_data.append({'biases': bias_list, 'weights': weight_list}) #add lists of weights and biases
-
-            elif type(layer) == Activation:
-                layer_data.append(flipped_dict[layer.activation_func]) #add name of func
 
         with open(filepath + '.json', 'w') as save_file:
             json.dump(save_file, layer_data)
