@@ -1,7 +1,7 @@
 from layer import Layer
 from dense import Dense
 from loss import Loss
-from activation import Activation, ActivationFuncs
+from activation import Activation, ActivationFuncs, func_dict
 import numpy as np
 import json
 
@@ -53,8 +53,21 @@ class NeuralNetwork:
         """
         save a neural network to a file
         """
+        flipped_dict = {value: key for key, value in func_dict.items()} #get a dict of the function as key
+        layer_data = []
+        for layer in self.layers:
+            if type(layer) == Dense:
+                bias_list = layer.biases.tolist()
+                weight_list = layer.weights.tolist()
+                layer_data.append({'biases': bias_list, 'weights': weight_list}) #add lists of weights and biases
+
+            elif type(layer) == Activation:
+                layer_data.append(flipped_dict[layer.activation_func]) #add name of func
+
         with open(filepath + '.json', 'w') as save_file:
-            json.dump(save_file, self) 
+            json.dump(save_file, layer_data)
+            
+
 
 
 
