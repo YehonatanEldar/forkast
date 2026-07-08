@@ -20,7 +20,7 @@ class Dense(Layer):
         if self.next_size == 0: # if final layer
             return input_arr
         
-        output_arr = np.zeros(self.next_size)
+        output_arr = np.zeros((input_arr.shape[0], self.next_size))
         self.input = input_arr
         self.input += self.biases
 
