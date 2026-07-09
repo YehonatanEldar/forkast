@@ -1,21 +1,26 @@
+import os
+
 import requests
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 
 # Constants
 TARGET_WORD = "fork"
 HARD_NEGATIVES = ["spoon", "knife", "backscratcher", "ladle", "tong", "whisk"]
-HARD_PORTION = 0.6
+OUTPUT_DIR = 'images'
+SEARCH_BUFFER_FACTOR = 1.5 # how many more to search for in case of download failure
+HARD_PORTION = 0.3
+POSITIVE_PORTION = 0.5
 DATASET_SIZE = 100
-THREAD_COUNT = 2
-CRAWL_DELAY = 2.0
-DOWNLOAD_DELAY = 1.0
+
+POS_COUNT = round(DATASET_SIZE * POSITIVE_PORTION)
+HARD_COUNT = round(round(DATASET_SIZE * HARD_PORTION) // len(HARD_NEGATIVES)) # count per hard negative
 
 def get_image_urls(word: str, count: int) -> list[dict]:
     """
     Returns a list of urls to images of the given word
     """
     with DDGS() as ddgs:
-        return list(ddgs.images(word, max_results=int(count)))
+        return list(ddgs.images(word, max_results=round(count * SEARCH_BUFFER_FACTOR)))
 
 
 def download_images(results: list[str], count: int, output_dir: str):
@@ -34,11 +39,11 @@ def download_images(results: list[str], count: int, output_dir: str):
             response = requests.get(url)
             if response.status_code == 200:
                 # Copy the contents to a file
+                download_count += 1
                 with open(f"{output_dir}/{download_count}.jpg", "wb") as f:
                     f.write(response.content)
 
-                download_count += 1
-                print(f"\033[KDownloaded: {download_count}/{count}", end="\r", flush=True)
+                print(f"Downloaded: {download_count}/{count}")
 
 
         except Exception as e:
@@ -46,12 +51,18 @@ def download_images(results: list[str], count: int, output_dir: str):
 
 
 def main():
+    os.makedirs(OUTPUT_DIR, exist_ok=True) # Create directory if not already exists
+    os.makedirs(OUTPUT_DIR + '/positive', exist_ok=True)
+    os.makedirs(OUTPUT_DIR + '/negative', exist_ok=True)
     # --- Scraping ---
-    results = get_image_urls(TARGET_WORD, 10)
-    download_images(results, 10, 'images')
-    
+    # 1. Scrape the target word
+    results = get_image_urls(TARGET_WORD, POS_COUNT)
+    print(f"Found {len(results)} result for {TARGET_WORD}!!!")
+    download_images(results, POS_COUNT, OUTPUT_DIR + '/positive')
+
+    # 2. Scrape from the hard negative list
+    for word in HARD_NEGATIVES:
+        results = get_image_urls(word, HARD_COUNT, OUTPUT_DIR + '/negative')
 
 if __name__ == '__main__':
     main()
-
-
