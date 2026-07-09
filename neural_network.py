@@ -65,8 +65,3 @@ class NeuralNetwork:
 
         with open(filepath + '.json', 'w') as save_file:
             json.dump(save_file, layer_data)
-
-
-
-
-            json.dump(save_file, self) 
