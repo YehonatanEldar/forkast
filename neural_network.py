@@ -22,7 +22,7 @@ class NeuralNetwork:
         """
 
         self.layers.append(new_layer)
-        self.layers.append(Activation(ActivationFuncs.relu))
+        self.layers.append(Activation(ActivationFuncs.sigmoid))
 
     def predict(self, input_data: np.array) -> float:
         """
@@ -56,5 +56,17 @@ class NeuralNetwork:
         """
         Save a neural network to a file
         """
+        layer_data = []
+        for layer in self.layers:
+            if type(layer) == Dense:
+                bias_list = layer.biases.tolist()
+                weight_list = layer.weights.tolist()
+                layer_data.append({'biases': bias_list, 'weights': weight_list}) #add lists of weights and biases
+
         with open(filepath + '.json', 'w') as save_file:
+            json.dump(save_file, layer_data)
+
+
+
+
             json.dump(save_file, self) 
