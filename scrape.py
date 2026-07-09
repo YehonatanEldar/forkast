@@ -1,79 +1,73 @@
 import os
+import shutil
 
-import requests
-from ddgs import DDGS
 from better_bing_image_downloader import downloader
+
 # Constants
 TARGET_WORD = "fork"
 HARD_NEGATIVES = ["spoon", "knife", "backscratcher", "ladle", "tong", "whisk"]
 OUTPUT_DIR = 'images'
+POSITIVE_DIR = os.path.join(OUTPUT_DIR, 'positive')
+NEGATIVE_DIR = os.path.join(OUTPUT_DIR, 'negative')
 SEARCH_BUFFER_FACTOR = 1.5 # how many more to search for in case of download failure
 HARD_PORTION = 0.3
 POSITIVE_PORTION = 0.5
-DATASET_SIZE = 100
+DATASET_SIZE = 1000
 
 POS_COUNT = round(DATASET_SIZE * POSITIVE_PORTION)
 HARD_COUNT = round(round(DATASET_SIZE * HARD_PORTION) // len(HARD_NEGATIVES)) # count per hard negative
 
-def get_image_urls(word: str, count: int) -> list[dict]:
-    """
-    Returns a list of urls to images of the given word
-    """
-    with DDGS() as ddgs:
-        return list(ddgs.images(word, max_results=round(count * SEARCH_BUFFER_FACTOR)))
-    
-
-# def download_images(results: list[str], count: int, output_dir: str):
-#     """
-#     Downloads the given url list to the given folder path
-#     """
-#     download_count = 0
-
-#     for item in results:
-#         if download_count >= count:
-#             break
-
-#         url = item['image']
-
-#         try: 
-#             response = requests.get(url)
-#             if response.status_code == 200:
-#                 # Copy the contents to a file
-#                 download_count += 1
-#                 with open(f"{output_dir}/{download_count}.jpg", "wb") as f:
-#                     f.write(response.content)
-
-#                 print(f"Downloaded: {download_count}/{count}")
-
-
-#         except Exception as e:
-#             print(e)
-
 def download_images(query: str, count: int, output_dir: str):
     downloader(
     query=query, 
-    limit=count,                  # <--- Set this to whatever number you need (e.g., 60, 100, 200)
-    output_dir=output_dir,  # Destination folder
+    limit=round(count * SEARCH_BUFFER_FACTOR),
+    output_dir=output_dir,
     adult_filter_off=True, 
     force_replace=False, 
     timeout=50,
     verbose=False
 )
+    
+    subfolder = os.path.join(output_dir, query)
+    file_count = 0
 
+    # empty out the evil subfolder
+    if os.path.exists(subfolder):
+        for filename in os.listdir(subfolder):
+            if file_count >= count: # Exit if reached quota
+                break
+
+            if filename == '_manifest.json': # dont copy the metadata file
+                continue
+
+            # Move file to parent folder
+            src_dir = os.path.join(subfolder, filename)
+            dst_dir = os.path.join(output_dir, filename)
+            shutil.move(src_dir, dst_dir)
+            file_count += 1
+
+    # Delete the evil subfolder
+    shutil.rmtree(subfolder)
 
 def main():
-    os.makedirs(OUTPUT_DIR, exist_ok=True) # Create directory if not already exists
-    os.makedirs(OUTPUT_DIR + '/positive', exist_ok=True)
-    os.makedirs(OUTPUT_DIR + '/negative', exist_ok=True)
+    # Create directory if not already exists
+    os.makedirs(POSITIVE_DIR, exist_ok=True)
+    os.makedirs(NEGATIVE_DIR, exist_ok=True)
     # --- Scraping ---
 
     # 1. Scrape the target word
-    download_images(TARGET_WORD, POS_COUNT, OUTPUT_DIR + '/positive')
-    print("Done!")
+    print(f"Now downloading: {TARGET_WORD}...")
+    download_images(TARGET_WORD, POS_COUNT, POSITIVE_DIR)
+    print("Downloaded positives!")
 
     # 2. Scrape from the hard negative list
-    # for word in HARD_NEGATIVES:
-    #     results = get_image_urls(word, HARD_COUNT, OUTPUT_DIR + '/negative')
+    for word in HARD_NEGATIVES:
+        print(f"Now downloading: {word}...")
+        download_images(word, HARD_COUNT, NEGATIVE_DIR)
+
+    print("Downloaded hard negatives!")
+
+    # Easy negatives to be taken from COCO database
 
 if __name__ == '__main__':
     main()

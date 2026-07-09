@@ -1,2 +1,2 @@
 numpy
-icrawler
+better_bing_image_downloader
