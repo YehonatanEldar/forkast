@@ -31,16 +31,15 @@ class Dense(Layer):
 
         return output_arr
     
-    def backward(self, input: np.array, output_gradient: np.array, learning_rate: float) -> float:
+    def backward(self, input: np.array, output_gradient: float, learning_rate: float) -> float:
         """
         Calculates the gradients for the weights and biases
         """
-        print("Weights:", self.weights.shape, "Gradient:", output_gradient.shape)
         
-        weights_gradient = np.dot(input.squeeze(), output_gradient)
-        bias_gradient = np.sum(output_gradient, axis=0, keepdims=True)
-    
-        input_gradient = np.dot(output_gradient, self.weights.T.squeeze()) 
+        weights_gradient = np.dot(output_gradient, input.T)
+        bias_gradient = output_gradient
+
+        input_gradient = np.dot(output_gradient, self.weights)
 
         self.weights = self.weights - weights_gradient * learning_rate
         self.biases = self.biases - bias_gradient * learning_rate

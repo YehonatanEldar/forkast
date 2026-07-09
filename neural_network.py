@@ -50,8 +50,7 @@ class NeuralNetwork:
 
             # propagate backwards
             for layer in self.layers[:-1][::-1]: # iterate backwards
-                # print(type(layer), layer.weights.shape if type(layer) == Dense else '---', current_gradient.shape)
-                current_gradient = layer.backward(results, current_gradient, learning_rate)
+                current_gradient = layer.backward(results, np.mean(current_gradient, axis=0).squeeze(), learning_rate)
 
     def save(self, filepath: str): # TODO make save work
         """
