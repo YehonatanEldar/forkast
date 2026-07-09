@@ -15,9 +15,13 @@ class Activation(Layer):
         """
         creates a new activation object
         """
+        func_dict = {'relu': lambda x: np.maximum(x, 0),
+                     'sigmoid': lambda x: 1/(1+ np.exp(-x))}
+        derivative_dict = {'relu': lambda x: 1 if x > 0 else 0,
+                           'sigmoid': lambda x: func_dict['sigmoid'](x) * (1 - func_dict['sigmoid'](x))}
 
-        self.activation_func = Activation.func_dict[activation_func.value]
-        self.derivative_func = Activation.derivative_dict[activation_func.name]
+        self.activation_func = func_dict[activation_func.value]
+        self.derivative_func = derivative_dict[activation_func.name]
         self.input = None
 
     def forward(self, input: np.array) -> np.array:
