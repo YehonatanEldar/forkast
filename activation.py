@@ -10,10 +10,6 @@ class ActivationFuncs(Enum):
     sigmoid = 'sigmoid'
 
 class Activation(Layer):
-    func_dict = {'relu': lambda x: np.maximum(x, 0),
-                    'sigmoid': lambda x: 1/(1+ np.exp(-x))}
-    derivative_dict = {'relu': lambda x: np.where(x > 0, 1, 0),
-                        'sigmoid': lambda x: Activation.func_dict['sigmoid'](x) * (1 - Activation.func_dict['sigmoid'])(x)}
     
     def __init__(self, activation_func: ActivationFuncs):
         """
