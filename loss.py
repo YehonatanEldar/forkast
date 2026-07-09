@@ -13,4 +13,4 @@ class Loss(Layer):
         Calculates the derivative of MSE for the given batch
         """
 
-        return (2/predicted.size) * (predicted - real)
+        return np.mean((2/predicted.size) * (predicted - real), axis=0)

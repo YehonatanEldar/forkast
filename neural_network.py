@@ -42,16 +42,15 @@ class NeuralNetwork:
         for i in range(epochs):
             print(f"    Epoch: #{i + 1}")
             # predict
-            print(x_train.shape)
             results = self.predict(x_train)
-            print(results)
             # calc loss
+            current_gradient = self.loss.backward(results, y_train)
+
             print(f"Error: {self.loss.forward(results, y_train)}")
 
             # propagate backwards
-            current_gradient = self.loss.backward(results, y_train)
-
-            for layer in self.layers[::-1]: # iterate backwards
+            for layer in self.layers[:-1][::-1]: # iterate backwards
+                # print(type(layer), layer.weights.shape if type(layer) == Dense else '---', current_gradient.shape)
                 current_gradient = layer.backward(results, current_gradient, learning_rate)
 
     def save(self, filepath: str): # TODO make save work

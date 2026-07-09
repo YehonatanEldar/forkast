@@ -69,7 +69,7 @@ def create_network(layer_sizes: list[int]) -> NeuralNetwork:
         network.add(dense)
 
     # Add last one
-    dense = Dense(layer_sizes[-1], 0)
+    dense = Dense(layer_sizes[-1], 1)
     network.add(dense)
 
     return network
