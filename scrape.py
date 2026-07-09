@@ -1,4 +1,5 @@
-from icrawler.builtin import BingImageCrawler
+import requests
+from duckduckgo_search import DDGS
 
 # Constants
 TARGET_WORD = "fork"
@@ -9,35 +10,45 @@ THREAD_COUNT = 2
 CRAWL_DELAY = 2.0
 DOWNLOAD_DELAY = 1.0
 
-def scrape_word_images(word: str, count: int, folder_path: str):
+def get_image_urls(word: str, count: int) -> list[dict]:
     """
-    Scrapes online for images of the given word and downloads them to the given folder
+    Returns a list of urls to images of the given word
     """
-    custom_headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
-    filters = dict(license='commercial,modify') # for non-copyrighted content only
-    crawler = BingImageCrawler(downloader_threads=THREAD_COUNT,  storage={'root_dir': folder_path})
-    crawler.session.headers.update(custom_headers)
-    crawler.parser.sleep_time = CRAWL_DELAY
-    crawler.downloader.sleep_time = DOWNLOAD_DELAY
+    with DDGS() as ddgs:
+        return list(ddgs.images(word, max_results=int(count)))
 
-    crawler.crawl(keyword=word, filters=filters, max_num=int(count))
+
+def download_images(results: list[str], count: int, output_dir: str):
+    """
+    Downloads the given url list to the given folder path
+    """
+    download_count = 0
+
+    for item in results:
+        if download_count >= count:
+            break
+
+        url = item['image']
+
+        try: 
+            response = requests.get(url)
+            if response.status_code == 200:
+                # Copy the contents to a file
+                with open(f"{output_dir}/{download_count}.jpg", "wb") as f:
+                    f.write(response.content)
+
+                download_count += 1
+                print(f"\033[KDownloaded: {download_count}/{count}", end="\r", flush=True)
+
+
+        except Exception as e:
+            print(e)
 
 
 def main():
     # --- Scraping ---
-    # Target word
-    scrape_word_images(TARGET_WORD, DATASET_SIZE//2, 'images/positive')
-
-    # Hard negatives
-    hard_count = (DATASET_SIZE//2) * HARD_PORTION
-    hard_per_word = hard_count / len(HARD_NEGATIVES)
-    for word in HARD_NEGATIVES:
-        scrape_word_images(word, hard_per_word, 'images/negative')
-
-    # Easy negatives
-
-
-
+    results = get_image_urls(TARGET_WORD, 10)
+    download_images(results, 10, 'images')
     
 
 if __name__ == '__main__':
