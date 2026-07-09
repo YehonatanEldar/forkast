@@ -5,15 +5,22 @@ TARGET_WORD = "fork"
 HARD_NEGATIVES = ["spoon", "knife", "backscratcher", "ladle", "tong", "whisk"]
 HARD_PORTION = 0.6
 DATASET_SIZE = 100
+THREAD_COUNT = 2
+CRAWL_DELAY = 2.0
+DOWNLOAD_DELAY = 1.0
 
 def scrape_word_images(word: str, count: int, folder_path: str):
     """
     Scrapes online for images of the given word and downloads them to the given folder
     """
+    custom_headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
     filters = dict(license='commercial,modify') # for non-copyrighted content only
-    crawler = BingImageCrawler(downloader_threads=4,  storage={'root_dir': folder_path})
+    crawler = BingImageCrawler(downloader_threads=THREAD_COUNT,  storage={'root_dir': folder_path})
+    crawler.session.headers.update(custom_headers)
+    crawler.parser.sleep_time = CRAWL_DELAY
+    crawler.downloader.sleep_time = DOWNLOAD_DELAY
 
-    crawler.crawl(keyword=word, filters=filters, max_num=count)
+    crawler.crawl(keyword=word, filters=filters, max_num=int(count))
 
 
 def main():
