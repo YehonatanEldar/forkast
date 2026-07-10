@@ -4,23 +4,27 @@ import shutil
 from better_bing_image_downloader import downloader
 
 # Constants
-TARGET_WORD = "fork"
-HARD_NEGATIVES = ["spoon", "knife", "backscratcher", "ladle", "tong", "whisk"]
+FORK_QUERIES = [
+    "metal dinner fork",
+    "stainless steel fork",
+    "plastic fork utensil",
+    "salad fork plate",
+    "dessert fork table",
+    "kitchen fork silver"
+]
+HARD_NEGATIVES = ["spoon", "knife", "ladle", "tong", "whisk"]
 OUTPUT_DIR = 'images'
 POSITIVE_DIR = os.path.join(OUTPUT_DIR, 'positive')
 NEGATIVE_DIR = os.path.join(OUTPUT_DIR, 'negative')
-SEARCH_BUFFER_FACTOR = 1.5 # how many more to search for in case of download failure
-HARD_PORTION = 0.3
-POSITIVE_PORTION = 0.5
-DATASET_SIZE = 1000
-
-POS_COUNT = round(DATASET_SIZE * POSITIVE_PORTION)
-HARD_COUNT = round(round(DATASET_SIZE * HARD_PORTION) // len(HARD_NEGATIVES)) # count per hard negative
+NUM_IMAGES = 200
 
 def download_images(query: str, count: int, output_dir: str):
+    """
+    Downloads images matching the query
+    """
     downloader(
     query=query, 
-    limit=round(count * SEARCH_BUFFER_FACTOR),
+    limit=count,
     output_dir=output_dir,
     adult_filter_off=True, 
     force_replace=False, 
@@ -29,13 +33,10 @@ def download_images(query: str, count: int, output_dir: str):
 )
     
     subfolder = os.path.join(output_dir, query)
-    file_count = 0
 
     # empty out the evil subfolder
     if os.path.exists(subfolder):
         for filename in os.listdir(subfolder):
-            if file_count >= count: # Exit if reached quota
-                break
 
             if filename == '_manifest.json': # dont copy the metadata file
                 continue
@@ -44,7 +45,6 @@ def download_images(query: str, count: int, output_dir: str):
             src_dir = os.path.join(subfolder, filename)
             dst_dir = os.path.join(output_dir, filename)
             shutil.move(src_dir, dst_dir)
-            file_count += 1
 
     # Delete the evil subfolder
     shutil.rmtree(subfolder)
@@ -56,14 +56,16 @@ def main():
     # --- Scraping ---
 
     # 1. Scrape the target word
-    print(f"Now downloading: {TARGET_WORD}...")
-    download_images(TARGET_WORD, POS_COUNT, POSITIVE_DIR)
+    for query in FORK_QUERIES:
+        print(f"Now downloading: {query}...")
+        download_images(query, NUM_IMAGES, POSITIVE_DIR)
+
     print("Downloaded positives!")
 
     # 2. Scrape from the hard negative list
     for word in HARD_NEGATIVES:
         print(f"Now downloading: {word}...")
-        download_images(word, HARD_COUNT, NEGATIVE_DIR)
+        download_images(word, NUM_IMAGES, NEGATIVE_DIR)
 
     print("Downloaded hard negatives!")
 
@@ -71,3 +73,8 @@ def main():
 
 if __name__ == '__main__':
     main()
+    dir_path = 'images/positive'
+    # List all entries and filter out directories
+    file_count = len([item for item in os.listdir(dir_path) if os.path.isfile(os.path.join(dir_path, item))])
+
+    print(f"Number of files: {file_count}")
